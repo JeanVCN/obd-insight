@@ -33,6 +33,7 @@ import com.obd.insight.domain.model.ProtocolType
 @Composable
 fun ConnectionScreen(
     onNavigateToAtTerminal: () -> Unit = {},
+    onNavigateToDashboard: () -> Unit = {},
     viewModel: ConnectionViewModel = viewModel(factory = AppModule.viewModelFactory)
 ) {
     val state by viewModel.state.collectAsState()
@@ -93,6 +94,10 @@ fun ConnectionScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onNavigateToAtTerminal) {
                         Text("AT Terminal")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onNavigateToDashboard) {
+                        Text("Dashboard")
                     }
                     protocol?.let {
                         Spacer(modifier = Modifier.height(12.dp))

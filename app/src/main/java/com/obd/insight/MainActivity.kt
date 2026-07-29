@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.obd.insight.ui.connection.ConnectionScreen
+import com.obd.insight.ui.dashboard.DashboardScreen
 import com.obd.insight.ui.terminal.AtTerminalScreen
 import com.obd.insight.ui.theme.ObdInsightTheme
 
@@ -30,11 +31,17 @@ private fun ObdInsightNavHost() {
     NavHost(navController = navController, startDestination = "connection") {
         composable("connection") {
             ConnectionScreen(
-                onNavigateToAtTerminal = { navController.navigate("at_terminal") }
+                onNavigateToAtTerminal = { navController.navigate("at_terminal") },
+                onNavigateToDashboard = { navController.navigate("dashboard") }
             )
         }
         composable("at_terminal") {
             AtTerminalScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable("dashboard") {
+            DashboardScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

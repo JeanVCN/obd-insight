@@ -79,7 +79,7 @@
 
 ---
 
-## Phase 2 — OBD Communication 🟡 (in progress)
+## Phase 2 — OBD Communication ✅
 
 **Goal**: Send OBD requests, parse responses, display sensor values.
 
@@ -88,8 +88,8 @@
 | 3 | AT commands | ✅ | #2 | Send arbitrary AT, parse response |
 | 4 | Protocol identification | ✅ | #3 | Detect vehicle protocol (CAN, ISO, etc.) |
 | 5 | First OBD request | ✅ | #4 | Send Mode 01 PID 00 (supported PIDs) |
-| 6 | Response parsing | ⬜ | #5 | Decode hex to physical values |
-| 7 | Basic sensor reading | ⬜ | #6 | RPM, speed, coolant temp, etc. |
+| 6 | Response parsing | ✅ | #5 | Decode hex to physical values |
+| 7 | Basic sensor reading | ✅ | #6 | RPM, speed, coolant temp, etc. |
 
 **Definition of Done**:
 - [x] `Elm327Command.RawAt` variant for arbitrary AT commands
@@ -101,9 +101,10 @@
 - [x] ObdPidReader for requesting and parsing OBD PID responses
 - [x] ObdResponse domain model
 - [x] Supported PIDs displayed on ConnectionScreen when connected
-- [ ] Real-time RPM, speed, coolant temp displayed
-- [ ] Error handling for unsupported PIDs
-- [ ] DashboardScreen with live gauges
+- [x] PidValueConverter decodes hex to physical values (RPM, speed, coolant temp, etc.)
+- [x] ObdSensorReader polls PIDs periodically (1s interval)
+- [x] DashboardScreen with live sensor cards (RPM, speed, coolant temp)
+- [x] Error handling for unsupported PIDs (returns null from converter)
 
 ---
 

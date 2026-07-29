@@ -8,7 +8,9 @@ import com.obd.insight.data.bluetooth.BluetoothConnectionManager
 import com.obd.insight.data.bluetooth.PermissionManager
 import com.obd.insight.data.elm327.Elm327Protocol
 import com.obd.insight.data.obd.ObdPidReader
+import com.obd.insight.data.obd.ObdSensorReader
 import com.obd.insight.ui.connection.ConnectionViewModel
+import com.obd.insight.ui.dashboard.DashboardViewModel
 import com.obd.insight.ui.terminal.AtTerminalViewModel
 
 object AppModule {
@@ -16,6 +18,7 @@ object AppModule {
     private var bluetoothManager: BluetoothConnectionManager? = null
     private var elm327Protocol: Elm327Protocol? = null
     private var obdPidReader: ObdPidReader? = null
+    private var obdSensorReader: ObdSensorReader? = null
     private var permissionManager: PermissionManager? = null
 
     fun provideBluetoothManager(): BluetoothConnectionManager {
@@ -36,6 +39,12 @@ object AppModule {
         }
     }
 
+    fun provideObdSensorReader(): ObdSensorReader {
+        return obdSensorReader ?: ObdSensorReader(provideObdPidReader()).also {
+            obdSensorReader = it
+        }
+    }
+
     fun providePermissionManager(context: Context): PermissionManager {
         return permissionManager ?: PermissionManager(context).also {
             permissionManager = it
@@ -53,6 +62,14 @@ object AppModule {
         initializer {
             AtTerminalViewModel(
                 bluetoothManager = provideBluetoothManager()
+            )
+        }
+    }
+
+    val dashboardViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
+        initializer {
+            DashboardViewModel(
+                sensorReader = provideObdSensorReader()
             )
         }
     }

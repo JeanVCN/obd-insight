@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.obd.insight.di.AppModule
 import com.obd.insight.domain.model.ConnectionState
+import com.obd.insight.domain.model.ProtocolType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +37,8 @@ fun ConnectionScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val devices by viewModel.devices.collectAsState()
+    val protocol by viewModel.protocol.collectAsState()
+    val supportedPids by viewModel.supportedPids.collectAsState()
 
     Scaffold(
         topBar = {
@@ -91,6 +94,14 @@ fun ConnectionScreen(
                     Button(onClick = onNavigateToAtTerminal) {
                         Text("AT Terminal")
                     }
+                    protocol?.let {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ProtocolCard(protocol = it)
+                    }
+                    supportedPids?.let { pids ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        SupportedPidsCard(pids = pids)
+                    }
                 }
                 is ConnectionState.Error -> {
                     Text(
@@ -129,6 +140,57 @@ private fun StatusCard(state: ConnectionState) {
             modifier = Modifier.padding(16.dp),
             style = MaterialTheme.typography.titleMedium
         )
+    }
+}
+
+@Composable
+private fun ProtocolCard(protocol: ProtocolType) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Protocol",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = protocol.description,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "ATDPN: ${protocol.number}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SupportedPidsCard(pids: List<Int>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Supported PIDs",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = pids.joinToString(", "),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
 

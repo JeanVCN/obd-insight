@@ -2,11 +2,14 @@ package com.obd.insight.data.elm327
 
 import com.obd.insight.data.bluetooth.BluetoothConnectionManager
 import com.obd.insight.domain.model.BluetoothResult
+import com.obd.insight.domain.model.ProtocolType
 
 class Elm327Protocol(
     private val bluetoothManager: BluetoothConnectionManager
 ) {
     private var initialized = false
+    private var _protocol: ProtocolType = ProtocolType.Unknown
+    val protocol: ProtocolType get() = _protocol
 
     suspend fun initialize(): BluetoothResult<Unit> {
         val steps = listOf(
@@ -28,6 +31,28 @@ class Elm327Protocol(
 
         initialized = true
         return BluetoothResult.Success(Unit)
+    }
+
+    suspend fun detectProtocol(): BluetoothResult<ProtocolType> {
+        when (val dpnResult = bluetoothManager.sendCommand("ATDPN")) {
+            is BluetoothResult.Error -> return dpnResult
+            is BluetoothResult.Success -> {
+                val dpn = dpnResult.data.trim()
+                val number = dpn.filter { it.isDigit() }.takeWhile { it.isDigit() }.toIntOrNull()
+                if (number != null) {
+                    _protocol = ProtocolType.fromNumber(number)
+                    return BluetoothResult.Success(_protocol)
+                }
+            }
+        }
+
+        when (val dpResult = bluetoothManager.sendCommand("ATDP")) {
+            is BluetoothResult.Error -> return dpResult
+            is BluetoothResult.Success -> {
+                _protocol = ProtocolType.fromDescription(dpResult.data.trim())
+                return BluetoothResult.Success(_protocol)
+            }
+        }
     }
 
     suspend fun execute(command: Elm327Command): BluetoothResult<Elm327Response> {

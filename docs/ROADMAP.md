@@ -85,9 +85,9 @@
 
 | # | Feature | Status | Depends On | Deliverable |
 |---|---|---|---|---|
-| 3 | AT commands | 🟡 | #2 | Send arbitrary AT, parse response |
-| 4 | Protocol identification | ⬜ | #3 | Detect vehicle protocol (CAN, ISO, etc.) |
-| 5 | First OBD request | ⬜ | #4 | Send Mode 01 PID 00 (supported PIDs) |
+| 3 | AT commands | ✅ | #2 | Send arbitrary AT, parse response |
+| 4 | Protocol identification | ✅ | #3 | Detect vehicle protocol (CAN, ISO, etc.) |
+| 5 | First OBD request | ✅ | #4 | Send Mode 01 PID 00 (supported PIDs) |
 | 6 | Response parsing | ⬜ | #5 | Decode hex to physical values |
 | 7 | Basic sensor reading | ⬜ | #6 | RPM, speed, coolant temp, etc. |
 
@@ -95,7 +95,12 @@
 - [x] `Elm327Command.RawAt` variant for arbitrary AT commands
 - [x] `sendCommand` updated to read multi-line responses
 - [x] AT terminal screen with command input and response display
-- [ ] Protocol detection screen showing detected protocol
+- [x] Protocol type model (enum with 10 protocols + Unknown)
+- [x] Protocol detection via ATDPN/ATDP commands
+- [x] Protocol card displayed on ConnectionScreen when connected
+- [x] ObdPidReader for requesting and parsing OBD PID responses
+- [x] ObdResponse domain model
+- [x] Supported PIDs displayed on ConnectionScreen when connected
 - [ ] Real-time RPM, speed, coolant temp displayed
 - [ ] Error handling for unsupported PIDs
 - [ ] DashboardScreen with live gauges

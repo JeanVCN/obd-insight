@@ -11,7 +11,7 @@
 |---|---|
 | Date | 2026-07-27 |
 | Phase | Phase 2 — OBD Communication |
-| Current Feature | #3 — AT commands (in progress) |
+| Current Feature | #6 — Response parsing (planned) |
 
 ## Last Checkpoint
 
@@ -22,9 +22,10 @@ Phase 1 fully implemented:
 
 ## Immediate Next Actions
 
-1. ~~Implement AT command execution~~ ✅ (AT terminal screen + RawAt + multi-line sendCommand)
-2. Protocol identification from ELM327 response
-3. First OBD request — Mode 01 PID 00 (supported PIDs)
+1. ~~AT command execution~~ ✅
+2. ~~Protocol identification~~ ✅
+3. ~~First OBD request — Mode 01 PID 00 (supported PIDs)~~ ✅
+4. Real-time sensor reading: RPM, speed, coolant temp ⬜
 
 ## Blockers
 

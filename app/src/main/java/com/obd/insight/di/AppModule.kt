@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.obd.insight.data.bluetooth.BluetoothConnectionManager
 import com.obd.insight.data.bluetooth.PermissionManager
 import com.obd.insight.data.elm327.Elm327Protocol
+import com.obd.insight.data.obd.ObdPidReader
 import com.obd.insight.ui.connection.ConnectionViewModel
 import com.obd.insight.ui.terminal.AtTerminalViewModel
 
@@ -14,6 +15,7 @@ object AppModule {
 
     private var bluetoothManager: BluetoothConnectionManager? = null
     private var elm327Protocol: Elm327Protocol? = null
+    private var obdPidReader: ObdPidReader? = null
     private var permissionManager: PermissionManager? = null
 
     fun provideBluetoothManager(): BluetoothConnectionManager {
@@ -28,6 +30,12 @@ object AppModule {
         }
     }
 
+    fun provideObdPidReader(): ObdPidReader {
+        return obdPidReader ?: ObdPidReader(provideElm327Protocol()).also {
+            obdPidReader = it
+        }
+    }
+
     fun providePermissionManager(context: Context): PermissionManager {
         return permissionManager ?: PermissionManager(context).also {
             permissionManager = it
@@ -38,7 +46,8 @@ object AppModule {
         initializer {
             ConnectionViewModel(
                 bluetoothManager = provideBluetoothManager(),
-                elm327Protocol = provideElm327Protocol()
+                elm327Protocol = provideElm327Protocol(),
+                obdPidReader = provideObdPidReader()
             )
         }
         initializer {

@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,11 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.obd.insight.di.AppModule
 import com.obd.insight.domain.model.ConnectionState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConnectionScreen(
-    viewModel: ConnectionViewModel = viewModel()
+    onNavigateToAtTerminal: () -> Unit = {},
+    viewModel: ConnectionViewModel = viewModel(factory = AppModule.viewModelFactory)
 ) {
     val state by viewModel.state.collectAsState()
     val devices by viewModel.devices.collectAsState()
@@ -82,6 +86,10 @@ fun ConnectionScreen(
                 is ConnectionState.Connected -> {
                     Button(onClick = { viewModel.disconnect() }) {
                         Text("Disconnect")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onNavigateToAtTerminal) {
+                        Text("AT Terminal")
                     }
                 }
                 is ConnectionState.Error -> {

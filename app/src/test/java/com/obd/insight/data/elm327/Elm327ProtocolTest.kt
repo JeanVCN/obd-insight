@@ -3,7 +3,7 @@ package com.obd.insight.data.elm327
 import com.obd.insight.data.bluetooth.BluetoothConnectionManager
 import com.obd.insight.domain.model.BluetoothResult
 import io.mockk.coEvery
-import io.mockk.coVerify
+import io.mockk.coVerifySequence
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -22,13 +22,15 @@ class Elm327ProtocolTest {
         val result = protocol.initialize()
 
         assertTrue(result is BluetoothResult.Success)
-        coVerify(order = 1) { bluetoothManager.sendCommand("ATZ") }
-        coVerify(order = 2) { bluetoothManager.sendCommand("ATE0") }
-        coVerify(order = 3) { bluetoothManager.sendCommand("ATL0") }
-        coVerify(order = 4) { bluetoothManager.sendCommand("ATS0") }
-        coVerify(order = 5) { bluetoothManager.sendCommand("ATH1") }
-        coVerify(order = 6) { bluetoothManager.sendCommand("ATAT1") }
-        coVerify(order = 7) { bluetoothManager.sendCommand("ATSP0") }
+        coVerifySequence {
+            bluetoothManager.sendCommand("ATZ")
+            bluetoothManager.sendCommand("ATE0")
+            bluetoothManager.sendCommand("ATL0")
+            bluetoothManager.sendCommand("ATS0")
+            bluetoothManager.sendCommand("ATH1")
+            bluetoothManager.sendCommand("ATAT1")
+            bluetoothManager.sendCommand("ATSP0")
+        }
     }
 
     @Test

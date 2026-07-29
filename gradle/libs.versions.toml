@@ -1,18 +1,17 @@
 [versions]
-agp = "8.4.0"
-kotlin = "1.9.24"
+agp = "9.0.1"
+kotlin = "2.0.21"
 core-ktx = "1.13.1"
 lifecycle = "2.8.4"
 activity-compose = "1.9.1"
-compose-bom = "2024.06.00"
-compose-compiler = "1.5.14"
+compose-bom = "2024.09.00"
 navigation = "2.7.7"
 room = "2.6.1"
 coroutines = "1.8.1"
-mockk = "1.13.10"
+mockk = "1.14.11"
 junit = "4.13.2"
 turbine = "1.1.0"
-ksp = "1.9.24-1.0.20"
+ksp = "2.0.21-1.0.28"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -33,6 +32,7 @@ room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -40,5 +40,5 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

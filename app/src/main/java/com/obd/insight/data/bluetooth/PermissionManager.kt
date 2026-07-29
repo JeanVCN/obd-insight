@@ -6,10 +6,13 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 
-class PermissionManager(private val context: Context) {
+class PermissionManager(
+    private val context: Context,
+    private val sdkInt: Int = Build.VERSION.SDK_INT
+) {
 
     fun hasBluetoothPermissions(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (sdkInt >= Build.VERSION_CODES.S) {
             hasPermission(Manifest.permission.BLUETOOTH_SCAN) &&
                 hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
         } else {
@@ -18,7 +21,7 @@ class PermissionManager(private val context: Context) {
     }
 
     fun requiredPermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (sdkInt >= Build.VERSION_CODES.S) {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_CONNECT

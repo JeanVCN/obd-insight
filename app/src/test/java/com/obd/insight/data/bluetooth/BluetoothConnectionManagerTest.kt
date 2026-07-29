@@ -55,11 +55,10 @@ class BluetoothConnectionManagerTest {
         val outputStream = ByteArrayOutputStream()
         val inputStream = ByteArrayInputStream("OK\r\n".toByteArray(Charsets.US_ASCII))
 
-        val mockSocket = mockk<android.bluetooth.BluetoothSocket> {
-            every { outputStream } returns outputStream
-            every { inputStream } returns inputStream
-            every { isConnected } returns true
-        }
+        val mockSocket = mockk<android.bluetooth.BluetoothSocket>(relaxed = true)
+        every { mockSocket.outputStream } returns outputStream
+        every { mockSocket.inputStream } returns inputStream
+        every { mockSocket.isConnected } returns true
 
         val managerWithMock = BluetoothConnectionManager(ioDispatcher = Dispatchers.Unconfined)
         val field = BluetoothConnectionManager::class.java.getDeclaredField("socket")

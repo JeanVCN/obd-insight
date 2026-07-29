@@ -1,10 +1,14 @@
 package com.obd.insight.di
 
 import android.content.Context
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.obd.insight.data.bluetooth.BluetoothConnectionManager
 import com.obd.insight.data.bluetooth.PermissionManager
 import com.obd.insight.data.elm327.Elm327Protocol
 import com.obd.insight.ui.connection.ConnectionViewModel
+import com.obd.insight.ui.terminal.AtTerminalViewModel
 
 object AppModule {
 
@@ -30,11 +34,18 @@ object AppModule {
         }
     }
 
-    fun provideConnectionViewModel(): ConnectionViewModel {
-        return ConnectionViewModel(
-            bluetoothManager = provideBluetoothManager(),
-            elm327Protocol = provideElm327Protocol()
-        )
+    val viewModelFactory: ViewModelProvider.Factory = viewModelFactory {
+        initializer {
+            ConnectionViewModel(
+                bluetoothManager = provideBluetoothManager(),
+                elm327Protocol = provideElm327Protocol()
+            )
+        }
+        initializer {
+            AtTerminalViewModel(
+                bluetoothManager = provideBluetoothManager()
+            )
+        }
     }
 
     fun cleanup() {

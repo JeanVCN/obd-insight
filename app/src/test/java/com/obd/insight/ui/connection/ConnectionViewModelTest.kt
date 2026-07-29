@@ -19,8 +19,8 @@ import kotlin.test.assertEquals
 
 class ConnectionViewModelTest {
 
-    private val bluetoothManager: BluetoothConnectionManager = mockk()
-    private val elm327Protocol: Elm327Protocol = mockk()
+    private val bluetoothManager: BluetoothConnectionManager = mockk(relaxUnitFun = true)
+    private val elm327Protocol: Elm327Protocol = mockk(relaxUnitFun = true)
     private lateinit var viewModel: ConnectionViewModel
 
     @Before

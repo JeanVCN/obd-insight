@@ -8,6 +8,7 @@ import com.obd.insight.domain.model.BluetoothResult
 import com.obd.insight.domain.model.ConnectionState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -68,15 +69,29 @@ class BluetoothConnectionManager(
             outputStream.flush()
 
             val reader = BufferedReader(InputStreamReader(inputStream, Charsets.US_ASCII))
-            val response = reader.readLine()
 
-            if (response == null) {
+            delay(100)
+
+            val response = buildString {
+                while (reader.ready()) {
+                    val line = reader.readLine() ?: break
+                    val trimmed = line.trim()
+                    if (trimmed.startsWith(">")) break
+                    if (trimmed.isNotEmpty()) {
+                        append(trimmed)
+                        append(' ')
+                    }
+                }
+            }.trim()
+
+            if (response.isEmpty()) {
                 BluetoothResult.Error(BluetoothError.IO_ERROR)
             } else {
-                BluetoothResult.Success(response.trim())
+                BluetoothResult.Success(response)
             }
         } catch (e: IOException) {
             _state.value = ConnectionState.Error(BluetoothError.IO_ERROR, e.message ?: "I/O error during sendCommand")
             BluetoothResult.Error(BluetoothError.IO_ERROR)
         }
     }
+}

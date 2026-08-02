@@ -11,7 +11,7 @@ sealed class ProtocolType(val number: Int, val description: String) {
     data object Can11bit250k : ProtocolType(8, "ISO 15765-4 CAN 11-bit 250k")
     data object Can29bit250k : ProtocolType(9, "ISO 15765-4 CAN 29-bit 250k")
     data object J1939 : ProtocolType(10, "SAE J1939 CAN 29-bit 250k")
-    data object Unknown : ProtocolType(0, "Unknown")
+    data object Unknown : ProtocolType(0, "Desconhecido")
 
     companion object {
         fun fromNumber(n: Int): ProtocolType = when (n) {
@@ -31,6 +31,7 @@ sealed class ProtocolType(val number: Int, val description: String) {
         fun fromDescription(desc: String): ProtocolType {
             val lower = desc.lowercase()
             return when {
+                lower.contains("j1939") -> J1939
                 lower.contains("j1850") && lower.contains("pwm") -> J1850Pwm
                 lower.contains("j1850") && lower.contains("vpw") -> J1850Vpw
                 lower.contains("9141") -> Iso9141_2
@@ -46,7 +47,6 @@ sealed class ProtocolType(val number: Int, val description: String) {
                         else -> Can11bit500k
                     }
                 }
-                lower.contains("j1939") -> J1939
                 else -> Unknown
             }
         }

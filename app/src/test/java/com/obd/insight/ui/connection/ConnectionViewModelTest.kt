@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ConnectionViewModelTest {
 
@@ -29,7 +30,11 @@ class ConnectionViewModelTest {
     fun setUp() {
         Dispatchers.setMain(StandardTestDispatcher())
         every { bluetoothManager.state } returns MutableStateFlow(ConnectionState.Disconnected)
+        every { bluetoothManager.discoveredDevices } returns MutableStateFlow(emptyList())
         every { bluetoothManager.getPairedDevices() } returns emptyList()
+        every { bluetoothManager.isBluetoothAvailable() } returns true
+        every { bluetoothManager.isBluetoothEnabled() } returns true
+        every { bluetoothManager.startDiscovery() } returns true
         viewModel = ConnectionViewModel(bluetoothManager, elm327Protocol, obdPidReader)
     }
 
@@ -52,5 +57,21 @@ class ConnectionViewModelTest {
         viewModel.disconnect()
 
         verify { bluetoothManager.disconnect() }
+    }
+
+    @Test
+    fun `scanDevices reports Bluetooth off`() {
+        every { bluetoothManager.isBluetoothEnabled() } returns false
+
+        viewModel.scanDevices()
+
+        assertTrue(viewModel.state.value is ConnectionState.Error)
+    }
+
+    @Test
+    fun `onPermissionsDenied reports permission error`() {
+        viewModel.onPermissionsDenied()
+
+        assertTrue(viewModel.state.value is ConnectionState.Error)
     }
 }

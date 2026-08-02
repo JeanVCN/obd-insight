@@ -41,7 +41,7 @@ class AtTerminalViewModel(
                 )
                 is BluetoothResult.Error -> AtCommandEntry(
                     command = trimmed,
-                    response = "Error: ${result.reason.name}",
+                    response = "Erro: ${result.reason.name}",
                     isError = true
                 )
             }

@@ -1,5 +1,10 @@
 package com.obd.insight.ui.connection
 
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,23 +26,51 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.obd.insight.di.AppModule
+import com.obd.insight.data.bluetooth.PermissionManager
+import com.obd.insight.domain.model.BluetoothError
 import com.obd.insight.domain.model.ConnectionState
 import com.obd.insight.domain.model.ProtocolType
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("MissingPermission")
 @Composable
 fun ConnectionScreen(
     onNavigateToAtTerminal: () -> Unit = {},
     onNavigateToDashboard: () -> Unit = {},
+    onNavigateToTripHistory: () -> Unit = {},
     viewModel: ConnectionViewModel = viewModel(factory = AppModule.viewModelFactory)
 ) {
+    val context = LocalContext.current
+    val permissionManager = remember(context) { PermissionManager(context) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.values.all { it }) {
+            viewModel.scanDevices()
+        } else {
+            viewModel.onPermissionsDenied()
+        }
+    }
+    val enableBluetoothLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            viewModel.scanDevices()
+        }
+    }
     val state by viewModel.state.collectAsState()
     val devices by viewModel.devices.collectAsState()
+    val discoveredDevices by viewModel.discoveredDevices.collectAsState()
+    val pairingDeviceName by viewModel.pairingDeviceName.collectAsState()
+    val discoveryMessage by viewModel.discoveryMessage.collectAsState()
+    val warningMessage by viewModel.warningMessage.collectAsState()
     val protocol by viewModel.protocol.collectAsState()
     val supportedPids by viewModel.supportedPids.collectAsState()
 
@@ -65,39 +98,76 @@ fun ConnectionScreen(
 
             when (state) {
                 is ConnectionState.Disconnected -> {
-                    Button(onClick = { viewModel.scanDevices() }) {
-                        Text("Scan for Devices")
+                    Button(onClick = {
+                        if (permissionManager.hasBluetoothPermissions()) {
+                            viewModel.scanDevices()
+                        } else {
+                            permissionLauncher.launch(permissionManager.requiredPermissions())
+                        }
+                    }) {
+                        Text("Procurar dispositivos")
                     }
                 }
                 is ConnectionState.Scanning -> {
                     CircularProgressIndicator()
-                    Text("Scanning...")
+                    Text("Procurando dispositivos próximos...")
                 }
                 is ConnectionState.FoundDevices -> {
-                    Button(onClick = { viewModel.scanDevices() }) {
-                        Text("Rescan")
+                    Button(onClick = {
+                        if (permissionManager.hasBluetoothPermissions()) {
+                            viewModel.scanDevices()
+                        } else {
+                            permissionLauncher.launch(permissionManager.requiredPermissions())
+                        }
+                    }) {
+                        Text("Procurar novamente")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
+                    discoveryMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
                     DeviceList(
-                        devices = devices,
-                        onDeviceClick = { device -> viewModel.connect(device) }
+                        modifier = Modifier.weight(1f),
+                        pairedDevices = devices,
+                        discoveredDevices = discoveredDevices,
+                        onConnect = { device -> viewModel.connect(device) },
+                        onPair = { device -> viewModel.pair(device) }
                     )
+                    pairingDeviceName?.let { name ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Solicitação de pareamento para $name. Confirme no diálogo do Android.")
+                    }
                 }
                 is ConnectionState.Connecting -> {
                     CircularProgressIndicator()
-                    Text("Connecting to ${(state as ConnectionState.Connecting).deviceName}...")
+                    Text("Conectando a ${(state as ConnectionState.Connecting).deviceName}...")
                 }
                 is ConnectionState.Connected -> {
+                    warningMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
                     Button(onClick = { viewModel.disconnect() }) {
-                        Text("Disconnect")
+                        Text("Desconectar")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onNavigateToAtTerminal) {
-                        Text("AT Terminal")
+                        Text("Terminal AT")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onNavigateToDashboard) {
-                        Text("Dashboard")
+                        Text("Painel")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onNavigateToTripHistory) {
+                        Text("Histórico de viagens")
                     }
                     protocol?.let {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -110,12 +180,26 @@ fun ConnectionScreen(
                 }
                 is ConnectionState.Error -> {
                     Text(
-                        text = "Error: ${(state as ConnectionState.Error).message}",
+                        text = "Erro: ${(state as ConnectionState.Error).message}",
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.scanDevices() }) {
-                        Text("Retry")
+                    if ((state as ConnectionState.Error).error == BluetoothError.BLUETOOTH_OFF) {
+                        Button(onClick = {
+                            enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                        }) {
+                            Text("Ligar Bluetooth")
+                        }
+                    } else {
+                        Button(onClick = {
+                            if (permissionManager.hasBluetoothPermissions()) {
+                                viewModel.scanDevices()
+                            } else {
+                                permissionLauncher.launch(permissionManager.requiredPermissions())
+                            }
+                        }) {
+                            Text("Tentar novamente")
+                        }
                     }
                 }
             }
@@ -126,12 +210,12 @@ fun ConnectionScreen(
 @Composable
 private fun StatusCard(state: ConnectionState) {
     val statusText = when (state) {
-        ConnectionState.Disconnected -> "Disconnected"
-        is ConnectionState.Scanning -> "Scanning..."
-        is ConnectionState.FoundDevices -> "Devices Found"
-        is ConnectionState.Connecting -> "Connecting..."
-        is ConnectionState.Connected -> "Connected to ${state.deviceName}"
-        is ConnectionState.Error -> "Error"
+        ConnectionState.Disconnected -> "Desconectado"
+        is ConnectionState.Scanning -> "Procurando..."
+        is ConnectionState.FoundDevices -> "Dispositivos encontrados"
+        is ConnectionState.Connecting -> "Conectando..."
+        is ConnectionState.Connected -> "Conectado a ${state.deviceName}"
+        is ConnectionState.Error -> "Erro"
     }
 
     Card(
@@ -158,7 +242,7 @@ private fun ProtocolCard(protocol: ProtocolType) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Protocol",
+                text = "Protocolo",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -186,7 +270,7 @@ private fun SupportedPidsCard(pids: List<Int>) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Supported PIDs",
+                text = "PIDs suportados",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -199,17 +283,27 @@ private fun SupportedPidsCard(pids: List<Int>) {
     }
 }
 
+@SuppressLint("MissingPermission")
 @Composable
 private fun DeviceList(
-    devices: List<android.bluetooth.BluetoothDevice>,
-    onDeviceClick: (android.bluetooth.BluetoothDevice) -> Unit
+    modifier: Modifier = Modifier,
+    pairedDevices: List<android.bluetooth.BluetoothDevice>,
+    discoveredDevices: List<android.bluetooth.BluetoothDevice>,
+    onConnect: (android.bluetooth.BluetoothDevice) -> Unit,
+    onPair: (android.bluetooth.BluetoothDevice) -> Unit
 ) {
     LazyColumn(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(devices) { device ->
+        if (pairedDevices.isNotEmpty()) {
+            item {
+                Text("Dispositivos pareados", style = MaterialTheme.typography.titleSmall)
+            }
+        }
+        items(pairedDevices) { device ->
             Card(
-                onClick = { onDeviceClick(device) },
+                onClick = { onConnect(device) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -220,7 +314,7 @@ private fun DeviceList(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = device.name ?: "Unknown Device",
+                        text = device.name ?: "Dispositivo desconhecido",
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
@@ -229,6 +323,42 @@ private fun DeviceList(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+        if (discoveredDevices.isNotEmpty()) {
+            item {
+                Text("Dispositivos próximos", style = MaterialTheme.typography.titleSmall)
+            }
+        }
+        items(discoveredDevices) { device ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = device.name ?: "Dispositivo desconhecido",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = device.address,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Button(onClick = { onPair(device) }) {
+                        Text("Parear")
+                    }
+                }
+            }
+        }
+        if (pairedDevices.isEmpty() && discoveredDevices.isEmpty()) {
+            item {
+                Text("Nenhum dispositivo Bluetooth pareado ou próximo foi encontrado.")
             }
         }
     }

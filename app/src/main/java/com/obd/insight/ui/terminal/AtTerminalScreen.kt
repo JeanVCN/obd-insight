@@ -62,16 +62,16 @@ fun AtTerminalScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AT Terminal") },
+                 title = { Text("Terminal AT") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
                 actions = {
                     if (entries.isNotEmpty()) {
                         OutlinedButton(onClick = { viewModel.clear() }) {
-                            Text("Clear")
+                            Text("Limpar")
                         }
                     }
                 },
@@ -102,7 +102,7 @@ fun AtTerminalScreen(
                 if (entries.isEmpty()) {
                     item {
                         Text(
-                            text = "Type an AT command below and press Send.",
+                            text = "Digite um comando AT abaixo e toque em Enviar.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -121,7 +121,7 @@ fun AtTerminalScreen(
                     value = inputText,
                     onValueChange = { inputText = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("e.g. ATI") },
+                     placeholder = { Text("ex.: ATI") },
                     singleLine = true,
                     enabled = !isSending
                 )
@@ -141,7 +141,7 @@ fun AtTerminalScreen(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Send")
+                        Text("Enviar")
                     }
                 }
             }

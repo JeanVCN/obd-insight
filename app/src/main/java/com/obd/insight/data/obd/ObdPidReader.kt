@@ -27,13 +27,28 @@ class ObdPidReader(
     }
 
     suspend fun requestSupportedPids(): BluetoothResult<List<Int>> {
-        val result = requestPid(1, 0)
-        return when (result) {
-            is BluetoothResult.Error -> result
-            is BluetoothResult.Success -> {
-                val data = result.data.data
-                if (data.size < 4) return BluetoothResult.Error(BluetoothError.PROTOCOL_ERROR)
-                BluetoothResult.Success(decodePidBitmask(data))
+        val supported = mutableListOf<Int>()
+        var blockPid = 0
+
+        while (true) {
+            when (val result = requestPid(1, blockPid)) {
+                is BluetoothResult.Error -> {
+                    if (blockPid == 0) return result
+                    return BluetoothResult.Success(supported.distinct().sorted())
+                }
+                is BluetoothResult.Success -> {
+                    val data = result.data.data.take(4)
+                    if (data.size < 4) {
+                        if (blockPid == 0) return BluetoothResult.Error(BluetoothError.PROTOCOL_ERROR)
+                        return BluetoothResult.Success(supported.distinct().sorted())
+                    }
+
+                    supported += decodePidBitmask(data, blockPid + 1)
+                    if ((data[3] and 0x01) == 0) {
+                        return BluetoothResult.Success(supported.distinct().sorted())
+                    }
+                    blockPid += 0x20
+                }
             }
         }
     }
@@ -62,13 +77,13 @@ class ObdPidReader(
         return BluetoothResult.Success(ObdResponse(requestedMode, requestedPid, data))
     }
 
-    private fun decodePidBitmask(data: List<Int>): List<Int> {
+    private fun decodePidBitmask(data: List<Int>, firstPid: Int): List<Int> {
         val pids = mutableListOf<Int>()
         for (byteIndex in data.indices) {
             val byte = data[byteIndex]
             for (bit in 0..7) {
                 if ((byte shr (7 - bit)) and 1 == 1) {
-                    pids.add(byteIndex * 8 + bit + 1)
+                    pids.add(firstPid + byteIndex * 8 + bit)
                 }
             }
         }

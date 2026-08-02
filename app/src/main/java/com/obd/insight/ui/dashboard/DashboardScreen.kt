@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -24,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,10 +38,12 @@ import com.obd.insight.domain.model.PidValue
 @Composable
 fun DashboardScreen(
     onNavigateBack: () -> Unit = {},
-    viewModel: DashboardViewModel = viewModel(factory = AppModule.dashboardViewModelFactory)
+    viewModel: DashboardViewModel = viewModel(
+        factory = AppModule.dashboardViewModelFactory(LocalContext.current)
+    )
 ) {
     val sensorValues by viewModel.sensorValues.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val activeTrip by viewModel.activeTrip.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.startCollecting()
@@ -47,10 +52,10 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") },
+                title = { Text("Painel") },
                 navigationIcon = {
                     Button(onClick = onNavigateBack) {
-                        Text("Back")
+                        Text("Voltar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -64,9 +69,17 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            TripControls(
+                isRecording = activeTrip?.isRecording,
+                onStart = viewModel::startTrip,
+                onPause = viewModel::pauseTrip,
+                onResume = viewModel::resumeTrip,
+                onFinish = viewModel::finishTrip
+            )
             if (sensorValues.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -74,20 +87,42 @@ fun DashboardScreen(
                 ) {
                     CircularProgressIndicator()
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Connecting to OBD...")
+                    Text("Aguardando dados OBD...")
                 }
             } else {
                 sensorValues.forEach { value ->
                     SensorCard(value = value)
                 }
             }
+        }
+    }
+}
 
-            error?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+@Composable
+private fun TripControls(
+    isRecording: Boolean?,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onFinish: () -> Unit
+) {
+    when (isRecording) {
+        null -> Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
+            Text("Iniciar gravação da viagem")
+        }
+        true -> Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(onClick = onPause) { Text("Pausar") }
+            Button(onClick = onFinish) { Text("Finalizar viagem") }
+        }
+        false -> Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(onClick = onResume) { Text("Retomar") }
+            Button(onClick = onFinish) { Text("Finalizar viagem") }
         }
     }
 }

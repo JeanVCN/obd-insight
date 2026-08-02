@@ -14,7 +14,7 @@ class PidValueConverterTest {
         assertNotNull(result)
         assertEquals(1726f, result.value)
         assertEquals("rpm", result.unit)
-        assertEquals("Engine RPM", result.label)
+        assertEquals("Rotação do motor", result.label)
     }
 
     @Test
@@ -60,6 +60,42 @@ class PidValueConverterTest {
         assertNotNull(result)
         assertEquals(29.8f, result.value, 0.1f)
         assertEquals("%", result.unit)
+    }
+
+    @Test
+    fun `convert short fuel trim using signed formula`() {
+        val result = PidValueConverter.convert(0x06, listOf(0x80))
+
+        assertNotNull(result)
+        assertEquals(0f, result.value, 0.1f)
+        assertEquals("Correção de combustível curta B1", result.label)
+    }
+
+    @Test
+    fun `convert fuel level from one byte`() {
+        val result = PidValueConverter.convert(0x2F, listOf(0x80))
+
+        assertNotNull(result)
+        assertEquals(50.2f, result.value, 0.1f)
+        assertEquals("%", result.unit)
+    }
+
+    @Test
+    fun `convert oil temperature`() {
+        val result = PidValueConverter.convert(0x5C, listOf(0x64))
+
+        assertNotNull(result)
+        assertEquals(60f, result.value)
+        assertEquals("°C", result.unit)
+    }
+
+    @Test
+    fun `convert control module voltage`() {
+        val result = PidValueConverter.convert(0x42, listOf(0x34, 0xB0))
+
+        assertNotNull(result)
+        assertEquals(13.488f, result.value, 0.01f)
+        assertEquals("V", result.unit)
     }
 
     @Test

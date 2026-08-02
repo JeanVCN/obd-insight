@@ -81,11 +81,11 @@ Este é um **projeto de aprendizado** — construído do zero para entender prof
 - Identificação do protocolo do veículo
 - Parsing de respostas hex para valores físicos
 
-### 📊 Fase 3 — Persistência
+### ✅ Fase 3 — Persistência (Concluída)
 
-- Banco de dados Room para gravação de leituras
-- Gravação de viagens (iniciar/parar/retomar)
-- Histórico e análise por viagem
+- Banco de dados Room para viagens e leituras de sensores
+- Gravação de viagens (iniciar, pausar, retomar e finalizar)
+- Histórico e estatísticas por viagem
 
 ### 🚀 Fase 4 — Dashboard & Análise
 

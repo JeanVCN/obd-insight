@@ -21,6 +21,9 @@ class ObdPidReaderTest {
     fun `requestSupportedPids returns list of supported PIDs from bitmask`() = runTest {
         val response = Elm327Response.Raw(listOf("41", "00", "BE", "1F", "B8", "11"))
         coEvery { protocol.execute(Elm327Command.ReadPid(1, 0)) } returns BluetoothResult.Success(response)
+        coEvery { protocol.execute(Elm327Command.ReadPid(1, 0x20)) } returns BluetoothResult.Error(
+            BluetoothError.PROTOCOL_ERROR
+        )
 
         val result = reader.requestSupportedPids()
 

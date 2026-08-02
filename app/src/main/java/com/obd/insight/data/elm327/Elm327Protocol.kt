@@ -7,7 +7,6 @@ import com.obd.insight.domain.model.ProtocolType
 class Elm327Protocol(
     private val bluetoothManager: BluetoothConnectionManager
 ) {
-    private var initialized = false
     private var _protocol: ProtocolType = ProtocolType.Unknown
     val protocol: ProtocolType get() = _protocol
 
@@ -23,13 +22,18 @@ class Elm327Protocol(
         )
 
         for (step in steps) {
-            when (val result = execute(step)) {
+            val result = execute(step)
+            when (result) {
                 is BluetoothResult.Error -> return result
-                is BluetoothResult.Success -> { }
+                is BluetoothResult.Success -> {
+                    if (result.data is Elm327Response.Error) {
+                        val error = result.data
+                        return BluetoothResult.Error(error.mappedError)
+                    }
+                }
             }
         }
 
-        initialized = true
         return BluetoothResult.Success(Unit)
     }
 
@@ -65,18 +69,41 @@ class Elm327Protocol(
 
     fun parse(response: String): Elm327Response {
         val trimmed = response.trim()
-        if (trimmed.startsWith("?")) return Elm327Response.Error("UNKNOWN", "Command not recognized")
-        if (trimmed.startsWith("NO DATA")) return Elm327Response.NoData
-        if (trimmed.startsWith("UNABLE TO CONNECT")) return Elm327Response.Error("UNABLE_TO_CONNECT", trimmed)
-        if (trimmed.startsWith("SEARCHING")) return Elm327Response.Error("SEARCHING", trimmed)
-        if (trimmed.startsWith("STOPPED")) return Elm327Response.Error("STOPPED", trimmed)
-        if (trimmed.startsWith("ERROR")) return Elm327Response.Error("ERROR", trimmed)
+        if (trimmed.isEmpty()) return Elm327Response.Unknown
 
-        val hexValues = trimmed.split("\\s+".toRegex()).filter { it.matches(Regex("^[0-9A-Fa-f]+$")) }
-        return if (hexValues.isNotEmpty()) {
-            Elm327Response.Raw(hexValues.map { it.uppercase() })
-        } else {
-            Elm327Response.Unknown
+        val hexValues = trimmed.split("\\s+".toRegex())
+            .filter { it.matches(Regex("^[0-9A-Fa-f]+$")) }
+            .flatMap(::normalizeHexFrame)
+
+        if (hexValues.isNotEmpty()) {
+            return Elm327Response.Raw(hexValues.map { it.uppercase() })
+        }
+
+        return when {
+            trimmed.startsWith("?") -> Elm327Response.Error("UNKNOWN", "Command not recognized")
+            trimmed.startsWith("NO DATA") -> Elm327Response.NoData
+            trimmed.startsWith("UNABLE TO CONNECT") -> Elm327Response.Error("UNABLE_TO_CONNECT", trimmed)
+            trimmed.startsWith("SEARCHING") -> Elm327Response.Error("SEARCHING", trimmed)
+            trimmed.startsWith("STOPPED") -> Elm327Response.Error("STOPPED", trimmed)
+            trimmed.startsWith("ERROR") -> Elm327Response.Error("ERROR", trimmed)
+            else -> Elm327Response.Unknown
         }
     }
 }
+
+private fun normalizeHexFrame(token: String): List<String> {
+    if (token.length >= 5 && token.length % 2 == 1) {
+        val payload = token.drop(3).chunked(2)
+        if (payload.isNotEmpty()) {
+            // With headers enabled, ELM327 emits a 3-digit CAN ID followed by frame length.
+            return payload.drop(1)
+        }
+    }
+    return token.chunked(2).filter { it.length == 2 }
+}
+
+private val Elm327Response.Error.mappedError: com.obd.insight.domain.model.BluetoothError
+    get() = when (code) {
+        "UNABLE_TO_CONNECT", "SEARCHING", "STOPPED" -> com.obd.insight.domain.model.BluetoothError.SOCKET_ERROR
+        else -> com.obd.insight.domain.model.BluetoothError.PROTOCOL_ERROR
+    }

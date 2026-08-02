@@ -108,25 +108,57 @@
 
 ---
 
-## Phase 3 — Persistence ⬜
+## Phase 3 — Persistence ✅
 
 **Goal**: Record and review trips.
 
 | # | Feature | Status | Depends On | Deliverable |
 |---|---|---|---|---|
-| 8 | Local persistence | ⬜ | #6 | Room database, store readings |
-| 9 | Trip recording | ⬜ | #8 | Start/stop trip, aggregate data |
-| 11 | Statistics | ⬜ | #9 | Per-trip analysis |
+| 8 | Local persistence | ✅ | #6 | Room database, store readings |
+| 9 | Trip recording | ✅ | #8 | Start/stop/resume trip |
+| 11 | Statistics | ✅ | #9 | Per-trip analysis |
 
 **Definition of Done**:
-- [ ] Room database with readings table
-- [ ] Trip recording (start/stop/resume)
-- [ ] Trip history list
-- [ ] Per-trip statistics (max RPM, avg speed, etc.)
+- [x] Room database with trips and readings tables
+- [x] Trip recording (start/pause/resume/finish)
+- [x] Trip history list
+- [x] Per-trip statistics (max RPM, average speed and max coolant temperature)
 
 ---
 
-## Phase 4 — Dashboard & Analysis ⬜
+## Phase 3.5 — First-Use Flow & Physical Validation ⬜
+
+**Goal**: Make the app usable on a phone that has never paired with an OBD adapter, then validate the full Bluetooth and OBD flow on real hardware.
+
+| # | Feature | Status | Depends On | Deliverable |
+|---|---|---|---|---|
+| 10 | Bluetooth permissions | ✅ | #1 | Runtime permission request and clear denied-state UI |
+| 11 | Device discovery and pairing | ✅ | #10 | Discover nearby Bluetooth Classic devices and guide pairing |
+| 12 | Physical validation | ⬜ | #11 | Validate ELM327 initialization, protocol detection and PIDs on a vehicle |
+
+**Definition of Done**:
+- [x] Request `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` at runtime on API 31+, or location on older versions
+- [x] Show actionable states when Bluetooth is unavailable, disabled or permission is denied
+- [x] Discover nearby Bluetooth Classic devices in addition to already paired devices
+- [x] Let the user start Android's pairing flow for a discovered adapter
+- [x] Keep paired and discovered devices clearly distinguishable in the UI
+- [x] Read ELM327 responses until the `>` prompt instead of relying on a fixed delay and `ready()`
+- [x] Reuse one input stream per socket and serialize commands
+- [x] Apply command timeout and close failed sockets
+- [x] Propagate ELM327 handshake failures to the connection UI
+- [x] Keep paired devices available when nearby discovery fails
+- [x] Distinguish discovery failure from missing Bluetooth permission
+- [ ] Test connection, AT initialization, protocol detection and sensor polling on a physical Android device with an ELM327 and an energized OBD-II port
+- [ ] Record a test trip and verify its readings and statistics in local Room storage
+
+**Development validation tools**:
+- Use Android Studio or `adb` to deploy the debug build directly to the phone; downloading APKs manually is not required
+- Use Android Studio Logcat or `adb logcat` to inspect Bluetooth and OBD diagnostics during a test
+- Use the emulator only for build, navigation, UI and local persistence checks; it cannot validate Bluetooth Classic RFCOMM or an ELM327
+
+---
+
+## Phase 4 — Dashboard & Analysis 🔄
 
 **Goal**: Visualize data in real-time and historically.
 
@@ -134,8 +166,31 @@
 |---|---|---|---|---|
 | 10 | Dashboard | ⬜ | #7, #9 | Real-time gauges, charts |
 | 12 | Historical analysis | ⬜ | #8, #11 | Chart history, export |
+| 16 | PID expansion | ✅ | #7 | Dynamic supported PID blocks and expanded conversion formulas |
 
 **Definition of Done**:
 - [ ] Real-time gauge UI (RPM, speed, coolant temp)
 - [ ] Chart history for any recorded parameter
 - [ ] Data export (CSV or similar)
+- [x] Dynamic supported PID blocks and expanded sensor conversion catalog
+- [ ] Selectable sensor groups and configurable polling interval
+- [ ] Diagnostic trouble codes and vehicle information
+
+---
+
+## Phase 5 — Local Development Telemetry (Deferred) ⏸️
+
+**Goal**: Optionally mirror diagnostic data from a phone to a notebook on the local network. This is deferred until local sensor analysis and dashboard capabilities are mature.
+
+| # | Feature | Status | Depends On | Deliverable |
+|---|---|---|---|---|
+| 13 | Local telemetry API | ⬜ | Phase 3.5 | Minimal Go service running on the notebook |
+| 14 | Diagnostic event delivery | ⬜ | #13 | Connection, AT command, response and error events sent to the notebook |
+| 15 | Reading delivery | ⬜ | #13 | Sensor readings and trip/session metadata sent to the notebook |
+
+**Architecture constraints**:
+- Room remains the app's local source of truth; Bluetooth and trip recording must work with no network connection
+- The API is an optional development and inspection tool, not a production dependency
+- API delivery failures must not interrupt Bluetooth communication or discard locally recorded data
+- Start with a local HTTP REST API: `GET /health`, `POST /sessions`, `POST /events` and `POST /readings`
+- Defer WebSocket, cloud hosting, authentication and synchronization until there is a concrete product need

@@ -1,6 +1,6 @@
 # OBD-II Protocols — Feature Overview
 
-**Status**: Pending (not implemented)
+**Status**: Implemented (V1)
 
 ## Purpose
 
@@ -20,8 +20,6 @@ Identify and interact with the vehicle's OBD-II protocol. Modern vehicles typica
 
 `ATSP0` tells the ELM327 to auto-detect the protocol. The response header (enabled via `ATH1`) identifies which protocol is in use.
 
-## Next Steps
+## Implementation
 
-- Parse `ATH1` response header to identify protocol
-- Configure protocol-specific behavior if needed
-- Document the protocol interaction differences
+`Elm327Protocol.detectProtocol()` queries `ATDPN` first and falls back to `ATDP`. The resulting `ProtocolType` is shown on the connection screen. Protocol-specific request behavior is deferred until a vehicle requires it.

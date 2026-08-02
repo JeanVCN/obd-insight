@@ -53,7 +53,7 @@ class BluetoothConnectionManagerTest {
     @Test
     fun `sendCommand writes command and reads response`() = runTest {
         val outputStream = ByteArrayOutputStream()
-        val inputStream = ByteArrayInputStream("OK\r\n".toByteArray(Charsets.US_ASCII))
+        val inputStream = ByteArrayInputStream("OK\r>\r\n".toByteArray(Charsets.US_ASCII))
 
         val mockSocket = mockk<android.bluetooth.BluetoothSocket>(relaxed = true)
         every { mockSocket.outputStream } returns outputStream
@@ -61,14 +61,18 @@ class BluetoothConnectionManagerTest {
         every { mockSocket.isConnected } returns true
 
         val managerWithMock = BluetoothConnectionManager(ioDispatcher = Dispatchers.Unconfined)
-        val field = BluetoothConnectionManager::class.java.getDeclaredField("socket")
-        field.isAccessible = true
-        field.set(managerWithMock, mockSocket)
+        val socketField = BluetoothConnectionManager::class.java.getDeclaredField("socket")
+        socketField.isAccessible = true
+        socketField.set(managerWithMock, mockSocket)
+
+        val inputStreamField = BluetoothConnectionManager::class.java.getDeclaredField("inputStream")
+        inputStreamField.isAccessible = true
+        inputStreamField.set(managerWithMock, inputStream)
 
         val result = managerWithMock.sendCommand("ATZ")
 
         assertTrue(result is com.obd.insight.domain.model.BluetoothResult.Success)
         assertEquals("OK", (result as com.obd.insight.domain.model.BluetoothResult.Success).data)
-        assertEquals("ATZ\r\n", outputStream.toString(Charsets.US_ASCII.name()))
+        assertEquals("ATZ\r", outputStream.toString(Charsets.US_ASCII.name()))
     }
 }

@@ -54,6 +54,33 @@ class Elm327ProtocolTest {
     }
 
     @Test
+    fun `parse keeps valid data after SEARCHING preamble`() {
+        val response = protocol.parse("SEARCHING... 41 0C 1A F8")
+
+        assertEquals(
+            Elm327Response.Raw(listOf("41", "0C", "1A", "F8")),
+            response
+        )
+    }
+
+    @Test
+    fun `parse removes compact CAN header and frame length`() {
+        val response = protocol.parse("7E804410C0000 7E904410C0000")
+
+        assertEquals(
+            Elm327Response.Raw(
+                listOf("41", "0C", "00", "00", "41", "0C", "00", "00")
+            ),
+            response
+        )
+    }
+
+    @Test
+    fun `read PID command uses two digit mode and PID`() {
+        assertEquals("01 0C", Elm327Command.ReadPid(1, 0x0C).raw)
+    }
+
+    @Test
     fun `parse returns NoData for NO DATA response`() {
         val response = protocol.parse("NO DATA")
 

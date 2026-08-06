@@ -10,6 +10,9 @@ interface SensorReadingDao {
     @Insert
     suspend fun insertAll(readings: List<SensorReadingEntity>)
 
+    @Query("SELECT * FROM sensor_readings WHERE tripId = :tripId ORDER BY recordedAt ASC, id ASC")
+    suspend fun getForTrip(tripId: Long): List<SensorReadingEntity>
+
     @Query("""
         SELECT trips.id, trips.startedAt, trips.endedAt, trips.isRecording,
                COUNT(sensor_readings.id) AS readingCount,

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -30,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.obd.insight.di.AppModule
@@ -75,9 +79,15 @@ fun ConnectionScreen(
     val supportedPids by viewModel.supportedPids.collectAsState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             androidx.compose.material3.TopAppBar(
-                title = { Text("OBD Insight") },
+                title = {
+                    Column {
+                        Text("OBD Insight", style = MaterialTheme.typography.titleLarge)
+                        Text("Conecte. Monitore. Entenda.", style = MaterialTheme.typography.labelSmall)
+                    }
+                },
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -89,7 +99,7 @@ fun ConnectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             StatusCard(state = state)
@@ -104,7 +114,7 @@ fun ConnectionScreen(
                         } else {
                             permissionLauncher.launch(permissionManager.requiredPermissions())
                         }
-                    }) {
+                    }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                         Text("Procurar dispositivos")
                     }
                 }
@@ -119,7 +129,7 @@ fun ConnectionScreen(
                         } else {
                             permissionLauncher.launch(permissionManager.requiredPermissions())
                         }
-                    }) {
+                    }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                         Text("Procurar novamente")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -154,20 +164,16 @@ fun ConnectionScreen(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
-                    Button(onClick = { viewModel.disconnect() }) {
+                    Button(onClick = { viewModel.disconnect() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                         Text("Desconectar")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = onNavigateToAtTerminal) {
+                    Button(onClick = onNavigateToAtTerminal, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                         Text("Terminal AT")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = onNavigateToDashboard) {
+                    Button(onClick = onNavigateToDashboard, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                         Text("Painel")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = onNavigateToTripHistory) {
-                        Text("Histórico de viagens")
                     }
                     protocol?.let {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -187,7 +193,7 @@ fun ConnectionScreen(
                     if ((state as ConnectionState.Error).error == BluetoothError.BLUETOOTH_OFF) {
                         Button(onClick = {
                             enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                        }) {
+                        }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                             Text("Ligar Bluetooth")
                         }
                     } else {
@@ -197,11 +203,16 @@ fun ConnectionScreen(
                             } else {
                                 permissionLauncher.launch(permissionManager.requiredPermissions())
                             }
-                        }) {
+                        }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                             Text("Tentar novamente")
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onNavigateToTripHistory, modifier = Modifier.fillMaxWidth()) {
+                Text("Histórico de viagens")
             }
         }
     }
@@ -218,17 +229,23 @@ private fun StatusCard(state: ConnectionState) {
         is ConnectionState.Error -> "Erro"
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)))
+            .padding(22.dp)
     ) {
+        Column(Modifier.padding(horizontal = 22.dp, vertical = 16.dp)) {
+        Text("STATUS DA CONEXÃO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .78f))
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(statusText, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onPrimary, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         Text(
-            text = statusText,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.titleMedium
+            if (state is ConnectionState.Connected) "Leituras prontas para o painel" else "O histórico continua disponível offline",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .78f)
         )
+        }
     }
 }
 

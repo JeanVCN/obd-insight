@@ -4,5 +4,6 @@ data class PidValue(
     val pid: Int,
     val value: Float,
     val unit: String,
-    val label: String
+    val label: String,
+    val rawData: String = ""
 )

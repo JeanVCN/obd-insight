@@ -74,7 +74,14 @@ class ObdPidReader(
         }
 
         val data = bytes.drop(modeIndex + 2)
-        return BluetoothResult.Success(ObdResponse(requestedMode, requestedPid, data))
+        return BluetoothResult.Success(
+            ObdResponse(
+                mode = requestedMode,
+                pid = requestedPid,
+                data = data,
+                rawData = hexTokens.joinToString(" ")
+            )
+        )
     }
 
     private fun decodePidBitmask(data: List<Int>, firstPid: Int): List<Int> {

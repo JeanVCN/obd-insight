@@ -126,7 +126,7 @@
 
 ---
 
-## Phase 3.5 — First-Use Flow & Physical Validation ⬜
+## Phase 3.5 — First-Use Flow & Physical Validation ✅
 
 **Goal**: Make the app usable on a phone that has never paired with an OBD adapter, then validate the full Bluetooth and OBD flow on real hardware.
 
@@ -134,7 +134,7 @@
 |---|---|---|---|---|
 | 10 | Bluetooth permissions | ✅ | #1 | Runtime permission request and clear denied-state UI |
 | 11 | Device discovery and pairing | ✅ | #10 | Discover nearby Bluetooth Classic devices and guide pairing |
-| 12 | Physical validation | ⬜ | #11 | Validate ELM327 initialization, protocol detection and PIDs on a vehicle |
+| 12 | Physical validation | ✅ | #11 | Validate ELM327 initialization, protocol detection and PIDs on a vehicle |
 
 **Definition of Done**:
 - [x] Request `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` at runtime on API 31+, or location on older versions
@@ -148,8 +148,8 @@
 - [x] Propagate ELM327 handshake failures to the connection UI
 - [x] Keep paired devices available when nearby discovery fails
 - [x] Distinguish discovery failure from missing Bluetooth permission
-- [ ] Test connection, AT initialization, protocol detection and sensor polling on a physical Android device with an ELM327 and an energized OBD-II port
-- [ ] Record a test trip and verify its readings and statistics in local Room storage
+- [x] Test connection, AT initialization, protocol detection and sensor polling on a physical Android device with an ELM327 and an energized OBD-II port
+- [x] Record test trips and verify their readings and statistics in local Room storage
 
 **Development validation tools**:
 - Use Android Studio or `adb` to deploy the debug build directly to the phone; downloading APKs manually is not required
@@ -164,14 +164,16 @@
 
 | # | Feature | Status | Depends On | Deliverable |
 |---|---|---|---|---|
-| 10 | Dashboard | ⬜ | #7, #9 | Real-time gauges, charts |
-| 12 | Historical analysis | ⬜ | #8, #11 | Chart history, export |
+| 10 | Dashboard | 🔄 | #7, #9 | Real-time dashboard and live sensor cards |
+| 12 | Historical analysis | 🔄 | #8, #11 | Trip detail charts, statistics and export |
 | 16 | PID expansion | ✅ | #7 | Dynamic supported PID blocks and expanded conversion formulas |
 
 **Definition of Done**:
-- [ ] Real-time gauge UI (RPM, speed, coolant temp)
-- [ ] Chart history for any recorded parameter
-- [ ] Data export (CSV or similar)
+- [x] Real-time dashboard UI (RPM, speed, coolant temp and expanded sensors)
+- [x] Chart history for recorded parameters in trip detail screens
+- [x] Data export in CSV and PDF formats
+- [x] Offline trip detail view without a Bluetooth connection
+- [x] Raw payload persistence for new trips
 - [x] Dynamic supported PID blocks and expanded sensor conversion catalog
 - [ ] Selectable sensor groups and configurable polling interval
 - [ ] Diagnostic trouble codes and vehicle information

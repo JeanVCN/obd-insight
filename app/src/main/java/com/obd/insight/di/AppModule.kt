@@ -15,6 +15,7 @@ import com.obd.insight.data.persistence.TripRepository
 import com.obd.insight.ui.connection.ConnectionViewModel
 import com.obd.insight.ui.dashboard.DashboardViewModel
 import com.obd.insight.ui.history.TripHistoryViewModel
+import com.obd.insight.ui.history.TripDetailsViewModel
 import com.obd.insight.ui.terminal.AtTerminalViewModel
 
 object AppModule {
@@ -51,7 +52,10 @@ object AppModule {
     }
 
     fun provideObdSensorReader(): ObdSensorReader {
-        return obdSensorReader ?: ObdSensorReader(provideObdPidReader()).also {
+        return obdSensorReader ?: ObdSensorReader(
+            pidReader = provideObdPidReader(),
+            isConnected = { provideBluetoothManager().state.value is com.obd.insight.domain.model.ConnectionState.Connected }
+        ).also {
             obdSensorReader = it
         }
     }
@@ -74,7 +78,7 @@ object AppModule {
             context.applicationContext,
             ObdDatabase::class.java,
             "obd-insight.db"
-        ).build().also { database = it }
+        ).addMigrations(ObdDatabase.MIGRATION_1_2).build().also { database = it }
     }
 
     val viewModelFactory: ViewModelProvider.Factory = viewModelFactory {
@@ -105,6 +109,15 @@ object AppModule {
     fun tripHistoryViewModelFactory(context: Context): ViewModelProvider.Factory = viewModelFactory {
         initializer {
             TripHistoryViewModel(
+                repository = provideTripRepository(context)
+            )
+        }
+    }
+
+    fun tripDetailsViewModelFactory(context: Context, tripId: Long): ViewModelProvider.Factory = viewModelFactory {
+        initializer {
+            TripDetailsViewModel(
+                tripId = tripId,
                 repository = provideTripRepository(context)
             )
         }

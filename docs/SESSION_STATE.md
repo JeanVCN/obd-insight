@@ -9,18 +9,25 @@
 
 | Field | Value |
 |---|---|
-| Date | 2026-08-02 |
-| Phase | Phase 3 — Persistence ✅ |
-| Current Feature | First-use Bluetooth flow implemented; physical validation pending |
+| Date | 2026-08-05 |
+| Phase | Phase 4 — Historical analysis and export 🔄 |
+| Current Feature | Offline trip details, raw-data persistence, CSV/PDF export and visual redesign |
 
 ## Last Checkpoint
 
-Phase 3 implemented:
+Completed today:
 - Room database stores trips and individual PID readings
 - Dashboard supports start, pause, resume and finish recording
-- Trip history shows reading counts and core sensor statistics
+- Trip history opens detailed trip dashboards without requiring Bluetooth
+- Trip detail screen shows metrics, sensor summaries and charts
+- CSV export preserves processed values and raw hexadecimal payloads for new trips
+- PDF export provides a colored offline report with metrics and charts
+- Connection and live dashboard screens use the refreshed visual system
+- Launcher icon is a minimal black graph line on white
+- Physical database recovery found two trips and 4,695 historical readings
+- Room migration from schema version 1 to 2 was verified on the physical phone
 
-Phase 3.5 implementation started:
+Bluetooth and collection behavior:
 - Connection screen requests the required Bluetooth permissions at runtime
 - The app handles unavailable and disabled Bluetooth with actionable UI
 - Nearby Bluetooth Classic devices are discovered separately from already paired devices
@@ -35,15 +42,9 @@ Phase 3.5 implementation started:
 - Android 13 validation confirmed both nearby-device permissions granted; discovery failures are now reported separately from permission failures
 - If discovery fails but paired devices exist, the connection screen keeps showing paired devices so an existing ELM327 can still be tested
 
-## Immediate Next Actions
-
-1. Validate expanded PID polling and formulas on the physical vehicle
-2. Improve the dashboard with gauges, sensor groups, detailed trips and historical charts
-3. Add DTC reading, vehicle information and CSV export
-
 ## Blockers
 
-No software blocker remains for the first physical smoke test. Real hardware validation is still required for adapter/vehicle-specific behavior.
+No software blocker remains. Another physical trip is recommended to validate the updated charts and PDF with fresh raw-data recordings.
 
 ## Hot Context
 
@@ -57,3 +58,15 @@ No software blocker remains for the first physical smoke test. Real hardware val
 - A future local telemetry API is optional and offline-safe: Room remains the source of truth if the notebook is unreachable
 - Physical test checkpoint: `docs/PHYSICAL_TEST_CHECKPOINT.md`
 - Confirmed live vehicle data through Bluetooth Classic ELM327, including RPM, load, coolant, MAF, throttle, module voltage and multiple ECU CAN responses
+
+## Immediate Next Actions
+
+1. Use the updated APK during another real trip and review the new detail charts and PDF on-device
+2. Add selectable chart ranges and optional sensor filters for very long trips
+3. Add DTC reading, VIN and further vehicle information
+
+## Data Notes
+
+- Historical database snapshot: `/tmp/opencode/obd-export-2026-08-05/`
+- Historical trips contain processed readings only; `rawData` is empty for rows created before schema version 2
+- New trips store all successful supported PID responses, including raw hexadecimal payloads

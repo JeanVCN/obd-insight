@@ -7,10 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import androidx.navigation.compose.rememberNavController
 import com.obd.insight.ui.connection.ConnectionScreen
 import com.obd.insight.ui.dashboard.DashboardScreen
 import com.obd.insight.ui.history.TripHistoryScreen
+import com.obd.insight.ui.history.TripDetailsScreen
 import com.obd.insight.ui.terminal.AtTerminalScreen
 import com.obd.insight.ui.theme.ObdInsightTheme
 
@@ -49,6 +52,16 @@ private fun ObdInsightNavHost() {
         }
         composable("trip_history") {
             TripHistoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenTrip = { tripId -> navController.navigate("trip_detail/$tripId") }
+            )
+        }
+        composable(
+            route = "trip_detail/{tripId}",
+            arguments = listOf(navArgument("tripId") { type = NavType.LongType })
+        ) { entry ->
+            TripDetailsScreen(
+                tripId = entry.arguments?.getLong("tripId") ?: return@composable,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

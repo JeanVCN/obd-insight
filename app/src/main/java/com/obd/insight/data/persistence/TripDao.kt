@@ -21,4 +21,7 @@ interface TripDao {
 
     @Query("SELECT * FROM trips WHERE endedAt IS NOT NULL ORDER BY startedAt DESC")
     fun observeFinishedTrips(): Flow<List<TripEntity>>
+
+    @Query("SELECT * FROM trips WHERE id = :tripId LIMIT 1")
+    suspend fun getById(tripId: Long): TripEntity?
 }

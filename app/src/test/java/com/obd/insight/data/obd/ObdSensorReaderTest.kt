@@ -32,6 +32,7 @@ class ObdSensorReaderTest {
         assertEquals(1726f, values[0].value) // RPM
         assertEquals(80f, values[1].value)   // Speed
         assertEquals(60f, values[2].value)   // Coolant
+        assertEquals("1A F8", values[0].rawData)
     }
 
     @Test
@@ -46,5 +47,18 @@ class ObdSensorReaderTest {
 
         assertEquals(1, values.size)
         assertEquals(80f, values[0].value)
+    }
+
+    @Test
+    fun `readSensorValues keeps raw bytes for unsupported pids`() = runTest {
+        coEvery { pidReader.requestPid(1, 0x90) } returns BluetoothResult.Success(
+            ObdResponse(1, 0x90, listOf(0x12, 0x34), "7E8 04 41 90 12 34")
+        )
+
+        val values = reader.readSensorValues(listOf(0x90)).first()
+
+        assertEquals(1, values.size)
+        assertEquals("raw", values.single().unit)
+        assertEquals("7E8 04 41 90 12 34", values.single().rawData)
     }
 }

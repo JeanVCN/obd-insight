@@ -22,5 +22,6 @@ data class SensorReadingEntity(
     val value: Float,
     val unit: String,
     val label: String,
+    val rawData: String = "",
     val recordedAt: Long
 )

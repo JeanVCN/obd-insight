@@ -13,6 +13,8 @@ class TripRepository(
 ) {
     suspend fun getUnfinishedTrip(): Trip? = tripDao.getUnfinishedTrip()?.toDomain()
 
+    suspend fun getTrip(tripId: Long): Trip? = tripDao.getById(tripId)?.toDomain()
+
     suspend fun startTrip(): Trip {
         val startedAt = clock()
         val id = tripDao.insert(TripEntity(startedAt = startedAt))
@@ -25,6 +27,9 @@ class TripRepository(
 
     suspend fun finishTrip(tripId: Long) = tripDao.finish(tripId, clock())
 
+    suspend fun getReadings(tripId: Long): List<SensorReadingEntity> =
+        sensorReadingDao.getForTrip(tripId)
+
     suspend fun recordValues(tripId: Long, values: List<PidValue>) {
         if (values.isEmpty()) return
         val recordedAt = clock()
@@ -35,6 +40,7 @@ class TripRepository(
                 value = value.value,
                 unit = value.unit,
                 label = value.label,
+                rawData = value.rawData,
                 recordedAt = recordedAt
             )
         })

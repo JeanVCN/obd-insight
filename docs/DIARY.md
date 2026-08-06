@@ -51,3 +51,41 @@
 - `PidValueConverter` returns `null` for unsupported PIDs (no crash, just no display)
 - `ObdSensorReader` uses sequential polling (not parallel) for simplicity and to avoid overwhelming the ELM327
 - `DashboardViewModel` uses `viewModelScope` for lifecycle-bound collection with a `collecting` flag to prevent double-start
+
+---
+
+## 2026-08-05 — Session 3
+
+### Physical data recovery
+- Connected the Poco `2207117BPG` over ADB and preserved the app database without clearing application data.
+- Extracted `obd-insight.db`, `obd-insight.db-wal` and `obd-insight.db-shm` to `/tmp/opencode/obd-export-2026-08-05/` for analysis.
+- Found two completed trips: 2,434 readings across 14 PIDs and 2,261 readings across 19 PIDs, 4,695 readings total.
+- Confirmed the installed database was schema version 1, so historical rows did not contain raw hexadecimal responses.
+- Installed the updated APK with `adb install -r`; Room migration to version 2 was confirmed and historical data remained intact.
+
+### Persistence and export
+- Added raw response persistence through `PidValue.rawData`, `ObdResponse.rawData` and `SensorReadingEntity.rawData`.
+- Sensor polling now requests all supported PIDs and stores fallback rows for unsupported-but-valid responses instead of discarding them.
+- Added Room migration `MIGRATION_1_2` for existing installations.
+- Added CSV export with processed values, timestamps, PID, unit, elapsed time and raw hexadecimal payload.
+- Added offline PDF export through Android `PdfDocument` and `FileProvider`.
+
+### Historical analysis and UI
+- Added trip detail navigation and `TripDetailsScreen` for opening a trip directly inside the app.
+- Added cards for duration, PID count, RPM, average speed, coolant temperature and engine load.
+- Added sensor summaries and reusable Compose charts with separate scale columns, current value, min/average/max and colored series.
+- Redesigned connection, live dashboard and history screens with a dark automotive palette, rounded panels, gradients and improved typography.
+- Removed the decorative car artwork from the connection screen after review.
+- Redesigned the launcher icon to a minimal black graph line on a white background.
+- Refined the PDF with dark app-aligned colors, colored charts, filled areas, bar charts for percentage metrics, safer text wrapping and no redundant sample-count footer labels.
+
+### Validation
+- `./gradlew testDebugUnitTest` passed.
+- `./gradlew assembleDebug` passed.
+- `./gradlew lintDebug` passed.
+- `git diff --check` passed.
+- The final debug APK was installed on the Poco with ADB while preserving the Room database.
+
+### Known limitations
+- Raw payloads are unavailable for the two historical trips because the old app never stored them; their processed readings remain usable for detail screens and PDF reports.
+- The PDF is generated natively with Android `PdfDocument`, not through HTML/WebView; this keeps generation offline and dependency-free.
